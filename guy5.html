@@ -1,0 +1,838 @@
+// קביעת מיקום ראשוני לשחקן
+        player.style.left = gameState.playerPosition + 'px';<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק איסוף חפצים</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #player {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 100px;
+            will-change: left; /* אופטימיזציה לאנימציות */
+        }
+        
+        .basket {
+            width: 80px;
+            height: 60px;
+            background-color: #8B4513;
+            border-radius: 0 0 40px 40px;
+            position: relative;
+        }
+        
+        .person {
+            width: 50px;
+            height: 80px;
+            background-color: #FFA500;
+            border-radius: 25px 25px 0 0;
+            position: absolute;
+            bottom: 40px;
+            left: 15px;
+        }
+        
+        .face {
+            position: relative;
+            top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .eye {
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            border-radius: 50%;
+            margin: 0 5px;
+        }
+        
+        .mouth {
+            width: 20px;
+            height: 10px;
+            border-bottom: 3px solid #000;
+            border-radius: 0 0 10px 10px;
+            margin-top: 5px;
+        }
+        
+        .item {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        
+        .apple {
+            background-color: red;
+        }
+        
+        .orange {
+            background-color: orange;
+        }
+        
+        .banana {
+            background-color: yellow;
+            border-radius: 40% 40% 20% 20%;
+            transform: rotate(45deg);
+        }
+        
+        #score-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        #timer-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .score-positive {
+            color: #4CAF50;
+        }
+        
+        .score-negative {
+            color: #f44336;
+        }
+        
+        /* עיצוב טבלת המובילים */
+        #leaderboard-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+        
+        .leaderboard-table {
+            width: 80%;
+            max-width: 500px;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .leaderboard-table th {
+            background-color: rgba(0, 0, 0, 0.5);
+            font-size: 18px;
+        }
+        
+        .leaderboard-table tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .leaderboard-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .empty-row {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #close-leaderboard {
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        /* עיצוב מסך הכנסת שם */
+        #name-input-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+        
+        #name-input {
+            padding: 10px;
+            font-size: 18px;
+            margin: 20px 0;
+            width: 300px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+        
+        #name-submit {
+            padding: 10px 20px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        #name-error {
+            color: #f44336;
+            margin-top: 10px;
+            font-size: 16px;
+            display: none;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+        
+        #start-button, #restart-button {
+            padding: 10px 20px;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score-container">ניקוד: <span id="score">0</span></div>
+        <div id="timer-container">זמן: <span id="timer">0</span></div>
+        
+        <div id="player">
+            <div class="person">
+                <div class="face">
+                    <div class="eye"></div>
+                    <div class="eye"></div>
+                </div>
+                <div class="face">
+                    <div class="mouth"></div>
+                </div>
+            </div>
+            <div class="basket"></div>
+        </div>
+        
+        <div id="start-screen">
+            <h1>משחק איסוף חפצים</h1>
+            <p>השתמש במקשי החצים ימינה ושמאלה כדי לזוז</p>
+            <p>החזק את המקשים לתנועה חלקה</p>
+            <p>אסוף כמה שיותר פירות שנופלים מהשמיים</p>
+            <p>כל איסוף = +1 נקודה, כל החמצה = -3 נקודות</p>
+            <p>המשחק מסתיים כאשר הניקוד יורד מתחת לאפס</p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="start-button">התחל משחק</button>
+                <button id="leaderboard-button">טבלת מובילים</button>
+            </div>
+        </div>
+        
+        <div id="game-over">
+            <h1>המשחק נגמר!</h1>
+            <p>הניקוד הסופי שלך: <span id="final-score">0</span></p>
+            <p>זמן ששרדת: <span id="final-time">0</span> שניות</p>
+            <button id="restart-button">שחק שוב</button>
+        </div>
+        
+        <!-- מסך הכנסת שם לפני המשחק -->
+        <div id="name-input-screen">
+            <h2>הזן את שמך לטבלת המובילים</h2>
+            <input type="text" id="name-input" placeholder="הכנס את שמך" maxlength="15">
+            <p id="name-error">שדה חובה! אנא הכנס את שמך</p>
+            <button id="name-submit">התחל משחק</button>
+        </div>
+        
+        <!-- מסך טבלת המובילים -->
+        <div id="leaderboard-screen">
+            <h2>טבלת המובילים</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>דירוג</th>
+                        <th>שם השחקן</th>
+                        <th>זמן (שניות)</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- תוכן טבלת המובילים יתמלא דינמית -->
+                </tbody>
+            </table>
+            <button id="close-leaderboard">סגור</button>
+        </div>
+    </div>
+
+    <script>
+        // מצב המשחק
+        const gameState = {
+            score: 0,
+            speed: 2,
+            dropRate: 2000,
+            items: [],
+            playerPosition: window.innerWidth / 2,
+            playerTargetPosition: window.innerWidth / 2, // מיקום יעד לאנימציה
+            playerSpeed: 10, // מהירות תנועת השחקן
+            leftPressed: false, // האם מקש שמאל לחוץ
+            rightPressed: false, // האם מקש ימין לחוץ
+            gameRunning: false,
+            itemTypes: ['apple', 'orange', 'banana'],
+            lastTime: 0,
+            playerWidth: 80,
+            playerReach: 120, // מרחק הגעה של השחקן (רוחב הסלסלה + מרווח נוסף)
+            lastDropPosition: null, // המיקום האחרון של חפץ שהופל
+            availableWidth: 0, // יוגדר בהמשך - רוחב אזור המשחק הזמין
+            gameTime: 0, // משך הזמן של המשחק בשניות
+            playerName: "", // שם השחקן הנוכחי
+            timerInterval: null // מזהה של ה-interval לטיימר
+        };
+        
+        // טבלת המובילים
+        let leaderboard = [];
+        
+        // אלמנטים
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const gameOverScreen = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart-button');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalTimeDisplay = document.getElementById('final-time');
+        const gameContainer = document.getElementById('game-container');
+        const nameInputScreen = document.getElementById('name-input-screen');
+        const nameInput = document.getElementById('name-input');
+        const nameSubmit = document.getElementById('name-submit');
+        const nameError = document.getElementById('name-error');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const leaderboardButton = document.getElementById('leaderboard-button');
+        const closeLeaderboardButton = document.getElementById('close-leaderboard');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        
+        // מאזין אירועים למקשי מקלדת
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        
+        // מאזיני אירועים למסכי התחלה וסיום
+        startButton.addEventListener('click', showNameInput);
+        restartButton.addEventListener('click', showNameInput);
+        nameSubmit.addEventListener('click', validateAndStartGame);
+        leaderboardButton.addEventListener('click', showLeaderboard);
+        closeLeaderboardButton.addEventListener('click', hideLeaderboard);
+        
+        // טעינת טבלת המובילים מה-localStorage
+        function loadLeaderboard() {
+            const savedLeaderboard = localStorage.getItem('fallingObjectsLeaderboard');
+            if (savedLeaderboard) {
+                leaderboard = JSON.parse(savedLeaderboard);
+            }
+        }
+        
+        // שמירת טבלת המובילים ב-localStorage
+        function saveLeaderboard() {
+            localStorage.setItem('fallingObjectsLeaderboard', JSON.stringify(leaderboard));
+        }
+        
+        // עדכון תצוגת טבלת המובילים
+        function updateLeaderboardDisplay() {
+            // מיון הטבלה לפי זמן מהגבוה לנמוך
+            leaderboard.sort((a, b) => b.time - a.time);
+            
+            // הגבלה לעשרה מובילים
+            const topTen = leaderboard.slice(0, 10);
+            
+            // ניקוי הטבלה הקודמת
+            leaderboardBody.innerHTML = '';
+            
+            // מילוי הטבלה עם שורות
+            for (let i = 0; i < 10; i++) {
+                const row = document.createElement('tr');
+                
+                // אם יש נתונים לשורה זו
+                if (i < topTen.length) {
+                    row.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>${topTen[i].name}</td>
+                        <td>${topTen[i].time}</td>
+                    `;
+                } else {
+                    // שורה ריקה אם אין מספיק שחקנים
+                    row.className = 'empty-row';
+                    row.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>---</td>
+                        <td>---</td>
+                    `;
+                }
+                
+                leaderboardBody.appendChild(row);
+            }
+        }
+        
+        // הצגת מסך טבלת המובילים
+        function showLeaderboard() {
+            loadLeaderboard();
+            updateLeaderboardDisplay();
+            leaderboardScreen.style.display = 'flex';
+        }
+        
+        // הסתרת מסך טבלת המובילים
+        function hideLeaderboard() {
+            leaderboardScreen.style.display = 'none';
+        }
+        
+        // הצגת מסך הכנסת שם
+        function showNameInput() {
+            nameError.style.display = 'none';
+            nameInput.value = gameState.playerName; // שימור שם אחרון
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            nameInputScreen.style.display = 'flex';
+            nameInput.focus();
+        }
+        
+        // אימות והתחלת המשחק
+        function validateAndStartGame() {
+            const name = nameInput.value.trim();
+            if (name === '') {
+                nameError.style.display = 'block';
+                return;
+            }
+            
+            gameState.playerName = name;
+            nameInputScreen.style.display = 'none';
+            startGame();
+        }
+        
+        // האזנה לאירוע לחיצה על Enter בשדה השם
+        nameInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                validateAndStartGame();
+            }
+        });
+        
+        // פונקציה לטיפול בלחיצת מקשים
+        function handleKeyDown(event) {
+            if (!gameState.gameRunning) return;
+            
+            if (event.key === 'ArrowLeft') {
+                gameState.leftPressed = true;
+                event.preventDefault(); // מניעת גלילת המסך
+            } else if (event.key === 'ArrowRight') {
+                gameState.rightPressed = true;
+                event.preventDefault(); // מניעת גלילת המסך
+            }
+        }
+        
+        // פונקציה לטיפול בשחרור מקשים
+        function handleKeyUp(event) {
+            if (event.key === 'ArrowLeft') {
+                gameState.leftPressed = false;
+            } else if (event.key === 'ArrowRight') {
+                gameState.rightPressed = false;
+            }
+        }
+        
+        // התחלת המשחק
+        function startGame() {
+            // איפוס משתני המשחק
+            gameState.score = 0;
+            gameState.speed = 2;
+            gameState.dropRate = 2000;
+            gameState.items = [];
+            gameState.playerPosition = window.innerWidth / 2;
+            gameState.playerTargetPosition = window.innerWidth / 2;
+            gameState.leftPressed = false;
+            gameState.rightPressed = false;
+            gameState.lastDropPosition = null;
+            gameState.gameTime = 0;
+            
+            // ניקוי כל החפצים מהמסך
+            document.querySelectorAll('.item').forEach(item => {
+                if (item.parentNode) {
+                    item.parentNode.removeChild(item);
+                }
+            });
+            
+            // עדכון הניקוד והטיימר במסך
+            scoreDisplay.textContent = '0';
+            timerDisplay.textContent = '0';
+            updateScoreColor();
+            
+            // הסתרת מסכי תחילת/סיום המשחק
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // התחלת הטיימר
+            startTimer();
+            
+            // התחלת המשחק
+            gameState.gameRunning = true;
+            gameState.lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+            scheduleItemDrop();
+        }
+        
+        // התחלת הטיימר
+        function startTimer() {
+            // ניקוי טיימר קודם אם קיים
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            // איפוס הזמן
+            gameState.gameTime = 0;
+            timerDisplay.textContent = '0';
+            
+            // הפעלת טיימר חדש
+            gameState.timerInterval = setInterval(() => {
+                gameState.gameTime++;
+                timerDisplay.textContent = gameState.gameTime;
+            }, 1000);
+        }
+        
+        // עצירת הטיימר
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }         // עדכון תנועת השחקן
+        function updatePlayerPosition(deltaTime) {
+            const containerWidth = gameContainer.clientWidth;
+            const playerWidth = gameState.playerWidth;
+            const moveSpeed = gameState.playerSpeed * (deltaTime / 16.67); // נירמול למהירות קבועה
+            
+            // חישוב המיקום החדש על פי המקשים הלחוצים
+            if (gameState.leftPressed) {
+                gameState.playerTargetPosition -= moveSpeed;
+            }
+            if (gameState.rightPressed) {
+                gameState.playerTargetPosition += moveSpeed;
+            }
+            
+            // הגבלת תנועה למסך
+            gameState.playerTargetPosition = Math.max(playerWidth / 2, Math.min(containerWidth - playerWidth / 2, gameState.playerTargetPosition));
+            
+            // החלקת התנועה - התקרבות הדרגתית למיקום היעד
+            const positionDiff = gameState.playerTargetPosition - gameState.playerPosition;
+            if (Math.abs(positionDiff) > 0.1) {
+                gameState.playerPosition += positionDiff * 0.2; // פקטור החלקה - ערך נמוך יותר = תנועה חלקה יותר
+            } else {
+                gameState.playerPosition = gameState.playerTargetPosition;
+            }
+            
+            // עדכון מיקום השחקן בDOM
+            player.style.left = gameState.playerPosition + 'px';
+            player.style.transform = 'translateX(-50%)';
+        }
+        
+        // אתחול מחדש של המשחק - עכשיו משמש רק לפתיחת מסך השם
+        function restartGame() {
+            showNameInput();
+        }
+        
+        // תכנון הורדת חפץ חדש
+        function scheduleItemDrop() {
+            if (!gameState.gameRunning) return;
+            
+            setTimeout(() => {
+                createItem();
+                scheduleItemDrop();
+                
+                // הורדת קצב הופעת החפצים ככל שהניקוד עולה
+                if (gameState.score > 0 && gameState.score % 5 === 0) {
+                    gameState.dropRate = Math.max(500, gameState.dropRate - 100);
+                    gameState.speed += 0.2;
+                }
+            }, gameState.dropRate);
+        }
+        
+        // יצירת חפץ חדש
+        function createItem() {
+            if (!gameState.gameRunning) return;
+            
+            const containerWidth = gameContainer.clientWidth;
+            gameState.availableWidth = containerWidth - 60; // 30px מכל צד של המסך
+            
+            // יצירת אלמנט החפץ
+            const itemElement = document.createElement('div');
+            itemElement.className = 'item';
+            
+            // בחירת סוג החפץ אקראי
+            const itemType = gameState.itemTypes[Math.floor(Math.random() * gameState.itemTypes.length)];
+            itemElement.classList.add(itemType);
+            
+            // מיקום חכם לאורך הציר האופקי
+            let xPosition;
+            
+            // אם זה החפץ הראשון או אין חפץ קודם, בחר מיקום אקראי
+            if (gameState.lastDropPosition === null) {
+                xPosition = Math.random() * gameState.availableWidth + 30;
+            } else {
+                // חישוב מרחק מקסימלי שהשחקן יכול לעבור בזמן סביר
+                const maxDistance = gameState.playerReach * 1.5;
+                
+                // הגרלת מיקום בטווח הגיוני מהמיקום האחרון
+                const minPos = Math.max(30, gameState.lastDropPosition - maxDistance);
+                const maxPos = Math.min(gameState.availableWidth + 30, gameState.lastDropPosition + maxDistance);
+                
+                xPosition = Math.random() * (maxPos - minPos) + minPos;
+            }
+            
+            // עדכון המיקום האחרון
+            gameState.lastDropPosition = xPosition;
+            
+            // הגדרת מיקום התחלתי
+            itemElement.style.left = xPosition + 'px';
+            itemElement.style.top = '0px';
+            
+            // הוספת החפץ למסך
+            gameContainer.appendChild(itemElement);
+            
+            // הוספת החפץ למערך החפצים
+            gameState.items.push({
+                element: itemElement,
+                x: xPosition,
+                y: 0,
+                width: 30,
+                height: 30,
+                type: itemType
+            });
+        }
+        
+        // לולאת המשחק העיקרית
+        function gameLoop(timestamp) {
+            if (!gameState.gameRunning) return;
+            
+            const deltaTime = timestamp - gameState.lastTime;
+            gameState.lastTime = timestamp;
+            
+            // עדכון מיקום השחקן
+            updatePlayerPosition(deltaTime);
+            
+            updateItems(deltaTime);
+            checkCollisions();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // עדכון מיקום החפצים
+        function updateItems(deltaTime) {
+            const containerHeight = gameContainer.clientHeight;
+            const speedFactor = deltaTime / 16.67; // Normalization for 60fps
+            
+            for (let i = gameState.items.length - 1; i >= 0; i--) {
+                const item = gameState.items[i];
+                
+                // עדכון מיקום החפץ
+                item.y += gameState.speed * speedFactor;
+                item.element.style.top = item.y + 'px';
+                
+                // בדיקה אם החפץ יצא מהמסך
+                if (item.y > containerHeight) {
+                    // הסרת החפץ מהמסך
+                    if (item.element.parentNode) {
+                        item.element.parentNode.removeChild(item.element);
+                    }
+                    
+                    // הסרת החפץ ממערך החפצים
+                    gameState.items.splice(i, 1);
+                    
+                    // הורדת ניקוד על החמצה
+                    gameState.score -= 3;
+                    scoreDisplay.textContent = gameState.score;
+                    
+                    // שינוי צבע הניקוד בהתאם לערך
+                    updateScoreColor();
+                    
+                    // בדיקה אם המשחק הסתיים בגלל ניקוד שלילי
+                    if (gameState.score < 0) {
+                        endGame("הפסדת! הניקוד ירד מתחת לאפס");
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // בדיקת התנגשויות
+        function checkCollisions() {
+            const playerRect = {
+                x: gameState.playerPosition - gameState.playerWidth / 2,
+                y: gameContainer.clientHeight - 70,
+                width: gameState.playerWidth,
+                height: 60
+            };
+            
+            for (let i = gameState.items.length - 1; i >= 0; i--) {
+                const item = gameState.items[i];
+                
+                // בדיקה אם יש התנגשות בין החפץ לסלסלה
+                if (
+                    item.x < playerRect.x + playerRect.width &&
+                    item.x + item.width > playerRect.x &&
+                    item.y < playerRect.y + playerRect.height &&
+                    item.y + item.height > playerRect.y
+                ) {
+                    // הסרת החפץ מהמסך
+                    if (item.element.parentNode) {
+                        item.element.parentNode.removeChild(item.element);
+                    }
+                    
+                    // הסרת החפץ ממערך החפצים
+                    gameState.items.splice(i, 1);
+                    
+                    // הוספת ניקוד
+                    gameState.score++;
+                    scoreDisplay.textContent = gameState.score;
+                    
+                    // עדכון צבע הניקוד
+                    updateScoreColor();
+                }
+            }
+        }
+        
+        // סיום המשחק
+        function endGame(message = "המשחק נגמר!") {
+            // עצירת המשחק
+            gameState.gameRunning = false;
+            stopTimer();
+            
+            // הוספת התוצאה לטבלת המובילים
+            addToLeaderboard();
+            
+            // עדכון מסך סיום המשחק
+            finalScoreDisplay.textContent = gameState.score;
+            finalTimeDisplay.textContent = gameState.gameTime;
+            
+            // עדכון כותרת מסך סיום המשחק
+            document.querySelector('#game-over h1').textContent = message;
+            
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // הוספת התוצאה לטבלת המובילים
+        function addToLeaderboard() {
+            // טעינת טבלת המובילים הנוכחית
+            loadLeaderboard();
+            
+            // הוספת התוצאה החדשה
+            leaderboard.push({
+                name: gameState.playerName,
+                time: gameState.gameTime
+            });
+            
+            // מיון הטבלה לפי זמן בסדר יורד
+            leaderboard.sort((a, b) => b.time - a.time);
+            
+            // הגבלה לעשרה מובילים
+            leaderboard = leaderboard.slice(0, 10);
+            
+            // שמירת הטבלה המעודכנת
+            saveLeaderboard();
+        }
+        
+        // התאמת גודל המשחק לגודל החלון
+        window.addEventListener('resize', () => {
+            const containerWidth = gameContainer.clientWidth;
+            
+            // עדכון מיקום השחקן בהתאם לגודל החלון החדש
+            gameState.playerPosition = Math.min(
+                containerWidth - gameState.playerWidth / 2,
+                Math.max(gameState.playerWidth / 2, gameState.playerPosition)
+            );
+            
+            // עדכון מיקום היעד גם כן
+            gameState.playerTargetPosition = gameState.playerPosition;
+            
+            player.style.left = gameState.playerPosition + 'px';
+        });
+        
+        // עדכון צבע הניקוד בהתאם לערך
+        function updateScoreColor() {
+            if (gameState.score > 0) {
+                scoreDisplay.className = 'score-positive';
+            } else if (gameState.score < 0) {
+                scoreDisplay.className = 'score-negative';
+            } else {
+                scoreDisplay.className = '';
+            }
+        }
+        
+        // טעינת טבלת המובילים בטעינת הדף
+        window.addEventListener('load', function() {
+            loadLeaderboard();
+        });
+    </script>
+</body>
+</html>
